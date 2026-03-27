@@ -604,7 +604,7 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 function saveSL() { localStorage.setItem('cantique-setlist', JSON.stringify(setlist)); }
 
 /* ── Firebase CRUD ── */
-async function saveSong(song) {
+async function dbSaveSong(song) {
   if (isReadOnly) { toast('Connectez-vous pour modifier'); return false; }
   try {
     await db.collection('songs').doc(song.id).set(song);
@@ -633,7 +633,7 @@ async function loadFromFirestore() {
     songs = snap.docs.map(d => d.data());
     if (songs.length === 0 && !isReadOnly) {
       // First run: push demo songs
-      DEMO_SONGS.forEach(s => db.collection('songs').doc(s.id).set(s));
+      DEMO_SONGS.forEach(s => db.collection('songs').doc(s.id).set(s)); // direct set, no guard needed on first run
     }
     renderList();
     if (currentSong) {
@@ -1159,7 +1159,7 @@ async function saveSong() {
     link:   document.getElementById('f-link').value.trim(),
     content: document.getElementById('f-content').value
   };
-  const ok = await saveSong(song);
+  const ok = await dbSaveSong(song);
   if (!ok) return;
   closeModal('song-modal');
   // Firestore listener will update the list automatically
@@ -1200,7 +1200,7 @@ function handleUpload(ev) {
       time:     p.meta.time     || '4/4',
       note: '', link: '', content
     };
-    const ok = await saveSong(song);
+    const ok = await dbSaveSong(song);
     if (ok) {
       closeModal('upload-modal');
       currentSong = song;
@@ -1652,8 +1652,6 @@ function migrateEvents() {
   }
   if (changed) saveEvents();
 }
-migrateEvents();
-
 function dateKey(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
 function fmtDateTime(iso) {
   if (!iso) return '';
@@ -2102,3 +2100,4 @@ setTimeout(() => {
 </script>
 </body>
 </html>
+
